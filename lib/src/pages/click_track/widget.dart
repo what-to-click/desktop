@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:click_tracker/click_tracker.dart';
 import 'package:click_tracker/click_tracker_platform_interface.dart';
 import 'package:flutter/material.dart';
-import 'package:click_tracker/click_tracker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:screen_capturer/screen_capturer.dart';
 import 'package:what_to_click/src/pages/click_track/widget/recorded_click.dart';
@@ -30,7 +30,6 @@ class _ClickTrackPageState extends State<ClickTrackPage> {
       final capturedScreen = await capturer.capture(
         mode: CaptureMode.screen,
         imagePath: imagePath,
-        silent: true,
       );
 
       setState(() {
