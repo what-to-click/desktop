@@ -50,30 +50,31 @@ class ClickPainter extends StatefulWidget {
 
 class ClickPainterState extends State<ClickPainter> {
   Future<ui.Image> getImage(ImageProvider img) async {
-    Completer<ImageInfo> completer = Completer();
-    img
-        .resolve(const ImageConfiguration())
-        .addListener(ImageStreamListener((ImageInfo info, bool _) {
-      completer.complete(info);
-    }));
-    ImageInfo imageInfo = await completer.future;
+    final Completer<ImageInfo> completer = Completer();
+    img.resolve(ImageConfiguration.empty).addListener(
+      ImageStreamListener((ImageInfo info, bool _) {
+        completer.complete(info);
+      }),
+    );
+    final ImageInfo imageInfo = await completer.future;
     return imageInfo.image;
   }
 
   @override
-  Widget build(BuildContext context) => FutureBuilder(
-      future: getImage(widget.image),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.done) {
-          // If the Future is complete, display the preview.
-          return paintImage(snapshot.data);
-        } else {
-          // Otherwise, display a loading indicator.
-          return const Center(child: CircularProgressIndicator());
-        }
-      });
+  Widget build(BuildContext context) => FutureBuilder<ui.Image>(
+        future: getImage(widget.image),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.done) {
+            // If the Future is complete, display the preview.
+            return paintImage(snapshot.data!);
+          } else {
+            // Otherwise, display a loading indicator.
+            return const Center(child: CircularProgressIndicator());
+          }
+        },
+      );
 
-  CustomPaint paintImage(image) => CustomPaint(
+  CustomPaint paintImage(ui.Image image) => CustomPaint(
         painter: ImagePainter(image, widget.rect, widget.clickPosition),
         child: SizedBox(
           width: widget.rect.width,
@@ -99,7 +100,11 @@ class ImagePainter extends CustomPainter {
     canvas.drawImageRect(
       resImage,
       Rect.fromLTWH(
-          0, 0, resImage.width.toDouble(), resImage.height.toDouble()),
+        0,
+        0,
+        resImage.width.toDouble(),
+        resImage.height.toDouble(),
+      ),
       Offset.zero & size,
       _imagePaint,
     );
