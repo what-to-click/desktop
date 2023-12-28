@@ -83,21 +83,31 @@ class ExtensionConnection {
   }
 }
 
-String serialize(
-  ({
-    RTCSessionDescription offer,
-    List<RTCIceCandidate> iceCandidates,
-  }) input,
-) =>
-    json.encode({
-      'offer': input.offer.sdp,
-      'iceCandidates': input.iceCandidates
-          .map<Map>(
-            (element) => {
-              'candidate': element.candidate,
-              'sdpMid': element.sdpMid,
-              'sdpMLineIndex': element.sdpMLineIndex,
-            },
-          )
-          .toList(),
-    });
+extension SerializeConnectionOffer on ExtensionConnection {
+  String _serialize(
+    ({
+      RTCSessionDescription offer,
+      List<RTCIceCandidate> iceCandidates,
+    }) input,
+  ) =>
+      json.encode({
+        'offer': {
+          'type': input.offer.type,
+          'sdp': input.offer.sdp,
+        },
+        'iceCandidates': input.iceCandidates
+            .map<Map>(
+              (element) => {
+                'candidate': element.candidate,
+                'sdpMid': element.sdpMid,
+                'sdpMLineIndex': element.sdpMLineIndex,
+              },
+            )
+            .toList(),
+      });
+
+  Future<String> serializedOffer() async {
+    final offerMap = _serialize(await beginConnection());
+    return base64Encode(offerMap.codeUnits);
+  }
+}

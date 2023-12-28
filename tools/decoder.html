@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <script type="text/javascript">
+    const { offer, iceCandidates } = JSON.parse(decodeURIComponent(escape(atob(window.location.hash.substring(1)))));
+
+    async function prepareAnswer(offer, iceCandidates) {
+      let peerConnection = new RTCPeerConnection();
+      const localIceCancidates = [];
+      peerConnection.ondatachannel = (event) => {
+        event.channel.onmessage = console.info;
+      };
+      peerConnection.onicecandidate = (event) => {
+        if (event.candidate) {
+          localIceCancidates.push(event.candidate);
+        }
+      };
+      await peerConnection.setRemoteDescription(offer);
+      iceCandidates.forEach((serializedCandidate) => peerConnection.addIceCandidate(
+        new RTCIceCandidate(serializedCandidate),
+      ),);
+      const answer = await peerConnection.createAnswer();
+      await peerConnection.setLocalDescription(answer);
+
+      await wait();
+      return {
+        answer,
+        iceCandidates: localIceCancidates,
+      };
+    }
+
+    const wait = (ms = 1000) => new Promise((resolve, _) => setTimeout(resolve, ms));
+
+    window.answer = () => prepareAnswer(offer, iceCandidates);
+
+  </script>
+</body>
+
+</html>
