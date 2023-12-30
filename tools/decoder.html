@@ -8,18 +8,24 @@
 </head>
 
 <body>
+
+  <button onclick="answer();">Confirm</button>
   <script type="text/javascript">
     const { offer, iceCandidates } = JSON.parse(decodeURIComponent(escape(atob(window.location.hash.substring(1)))));
 
     async function prepareAnswer(offer, iceCandidates) {
-      let peerConnection = new RTCPeerConnection();
-      const localIceCancidates = [];
+      let peerConnection = new RTCPeerConnection({ iceServers: [] });
+      const localIceCandidates = [];
       peerConnection.ondatachannel = (event) => {
-        event.channel.onmessage = console.info;
+        event.channel.onmessage = (event) => {
+          const pTag = document.createElement('p');
+          pTag.textContent = event.data;
+          document.body.appendChild(pTag);
+        };
       };
       peerConnection.onicecandidate = (event) => {
         if (event.candidate) {
-          localIceCancidates.push(event.candidate);
+          localIceCandidates.push(event.candidate);
         }
       };
       await peerConnection.setRemoteDescription(offer);
@@ -32,13 +38,23 @@
       await wait();
       return {
         answer,
-        iceCandidates: localIceCancidates,
+        iceCandidates: localIceCandidates,
       };
+    }
+
+    async function serializeAnswer({ answer, iceCandidates = [] } = {}) {
+      return JSON.stringify({ answer, iceCandidates });
+    }
+
+    function contactDesktop(serializedAnswer) {
+      const desktopDeeplink = `wtc://what-to-click.com/answer#${encodeURIComponent(btoa(serializedAnswer))}`;
+      console.debug('deeplink:', { desktopDeeplink });
+      window.open(desktopDeeplink, '_blank');
     }
 
     const wait = (ms = 1000) => new Promise((resolve, _) => setTimeout(resolve, ms));
 
-    window.answer = () => prepareAnswer(offer, iceCandidates);
+    window.answer = () => prepareAnswer(offer, iceCandidates).then(serializeAnswer).then(contactDesktop);
 
   </script>
 </body>

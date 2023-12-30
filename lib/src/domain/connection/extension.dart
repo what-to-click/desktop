@@ -64,21 +64,34 @@ class ExtensionConnection {
     );
   }
 
-  Future<void> confirmConnection(String sdp) async {
+  Future<void> confirmConnection(String serializedAnswer) async {
     assert(_peerConnection != null);
-    _peerConnection!.setRemoteDescription(
-      RTCSessionDescription(
-        sdp,
-        RTCSessionDescriptionType.answer.toString(),
-      ),
-    );
+    final (answer, iceCandidates) = deserialize(serializedAnswer);
+    await _peerConnection!.setRemoteDescription(answer);
+    iceCandidates.forEach((candidate) {
+      // Firefox is trying to be compliant with the spec
+      // and sends an empty candidate to indicate trickle ICE end.
+      // MacOSes WebRTC implementation does not like that and crashes
+      // the app if it founds this candidate, so we need to filter it out
+      // manually. It does not affect the connection routine.
+      if (candidate.candidate?.isNotEmpty ?? false) {
+        _peerConnection!.addCandidate(candidate);
+      }
+    });
+    _peerConnection!.onConnectionState =
+        (RTCPeerConnectionState connectionState) {
+      if (connectionState ==
+          RTCPeerConnectionState.RTCPeerConnectionStateConnected) {
+        send('connected!');
+      }
+    };
     status = ExtensionConnectionStatus.confirmed;
   }
 
-  Future<void> send() async {
+  Future<void> send(String text) async {
     assert(status == ExtensionConnectionStatus.confirmed);
     status = ExtensionConnectionStatus.active;
-    _sendDataChannel.send(RTCDataChannelMessage('hello from desktop'));
+    await _sendDataChannel.send(RTCDataChannelMessage(text));
     status = ExtensionConnectionStatus.done;
   }
 }
@@ -109,5 +122,27 @@ extension SerializeConnectionOffer on ExtensionConnection {
   Future<String> serializedOffer() async {
     final offerMap = _serialize(await beginConnection());
     return base64Encode(offerMap.codeUnits);
+  }
+
+  (RTCSessionDescription answer, List<RTCIceCandidate> iceCandidates)
+      deserialize(String input) {
+    final json = jsonDecode(
+      Uri.decodeComponent(String.fromCharCodes(base64Decode(input))),
+    );
+    return (
+      RTCSessionDescription(
+        json['answer']['sdp'] as String,
+        json['answer']['type'] as String,
+      ),
+      (json['iceCandidates'] as List<dynamic>)
+          .map<RTCIceCandidate>(
+            (serializedCandidate) => RTCIceCandidate(
+              serializedCandidate['candidate'] as String,
+              serializedCandidate['sdpMid'] as String,
+              serializedCandidate['sdpMLineIndex'] as int,
+            ),
+          )
+          .toList(),
+    );
   }
 }
