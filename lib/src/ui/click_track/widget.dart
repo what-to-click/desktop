@@ -7,7 +7,7 @@ import 'package:click_tracker/click_tracker_platform_interface.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:screen_capturer/screen_capturer.dart';
-import 'package:what_to_click/src/pages/click_track/widget/recorded_click.dart';
+import 'package:what_to_click/src/ui/click_track/widget/recorded_click.dart';
 
 @RoutePage()
 class ClickTrackPage extends StatefulWidget {

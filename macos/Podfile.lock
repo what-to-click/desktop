@@ -10,6 +10,8 @@ PODS:
     - FlutterMacOS
   - screen_capturer (0.1.0):
     - FlutterMacOS
+  - system_tray (0.0.1):
+    - FlutterMacOS
   - uni_links_desktop (0.0.1):
     - FlutterMacOS
   - url_launcher_macos (0.0.1):
@@ -22,6 +24,7 @@ DEPENDENCIES:
   - FlutterMacOS (from `Flutter/ephemeral`)
   - path_provider_foundation (from `Flutter/ephemeral/.symlinks/plugins/path_provider_foundation/darwin`)
   - screen_capturer (from `Flutter/ephemeral/.symlinks/plugins/screen_capturer/macos`)
+  - system_tray (from `Flutter/ephemeral/.symlinks/plugins/system_tray/macos`)
   - uni_links_desktop (from `Flutter/ephemeral/.symlinks/plugins/uni_links_desktop/macos`)
   - url_launcher_macos (from `Flutter/ephemeral/.symlinks/plugins/url_launcher_macos/macos`)
 
@@ -40,6 +43,8 @@ EXTERNAL SOURCES:
     :path: Flutter/ephemeral/.symlinks/plugins/path_provider_foundation/darwin
   screen_capturer:
     :path: Flutter/ephemeral/.symlinks/plugins/screen_capturer/macos
+  system_tray:
+    :path: Flutter/ephemeral/.symlinks/plugins/system_tray/macos
   uni_links_desktop:
     :path: Flutter/ephemeral/.symlinks/plugins/uni_links_desktop/macos
   url_launcher_macos:
@@ -51,6 +56,7 @@ SPEC CHECKSUMS:
   FlutterMacOS: 8f6f14fa908a6fb3fba0cd85dbd81ec4b251fb24
   path_provider_foundation: 29f094ae23ebbca9d3d0cec13889cd9060c0e943
   screen_capturer: 835bdb791b6e54d01257961c2e6ccd20a57ddc17
+  system_tray: e53c972838c69589ff2e77d6d3abfd71332f9e5d
   uni_links_desktop: 45900fb319df48fcdea2df0756e9c2626696b026
   url_launcher_macos: d2691c7dd33ed713bf3544850a623080ec693d95
   WebRTC-SDK: c24d2a6c9f571f2ed42297cb8ffba9557093142b

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:developer';
 
 import 'package:flutter_webrtc/flutter_webrtc.dart';
+import 'package:injectable/injectable.dart';
 
 const dataChannelId = 1;
 const dataChannelLabel = 'wtc-dc1';
@@ -20,6 +21,7 @@ enum RTCSessionDescriptionType {
   String toString() => value;
 }
 
+@lazySingleton
 class ExtensionConnection {
   RTCPeerConnection? _peerConnection;
   late RTCDataChannel _sendDataChannel;

@@ -1,29 +1,28 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:uni_links/uni_links.dart';
-import 'package:url_launcher/url_launcher_string.dart';
 import 'package:what_to_click/src/app.dart';
 import 'package:what_to_click/src/domain/connection/extension.dart';
-import 'package:what_to_click/src/pages/router.dart';
+import 'package:what_to_click/src/injectable.dart';
+import 'package:what_to_click/src/ui/system_tray.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final extensionConnection = ExtensionConnection();
-  final serializedOffer = await extensionConnection.serializedOffer();
-  await launchUrlString(
-    'https://wtc.wrbl.xyz/connection-test.html#$serializedOffer',
-  );
+  configureDependencies();
+  setupDeeplinkListener();
+  sl<SystemTrayManager>().init();
+  runApp(WhatToClickApp());
+}
 
-  final appRouter = AppRouter();
-
+void setupDeeplinkListener() {
+  final extensionConnection = sl<ExtensionConnection>();
   linkStream.listen((link) {
-    if (link == null) {
+    if (link == null ||
+        extensionConnection.status != ExtensionConnectionStatus.begin) {
       return;
     }
+
     final uri = Uri.parse(link);
     final hash = uri.fragment;
     extensionConnection.confirmConnection(hash);
   });
-  runApp(WhatToClickApp(appRouter: appRouter));
 }

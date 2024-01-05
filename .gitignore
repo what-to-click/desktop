@@ -47,3 +47,4 @@ app.*.map.json
 *.gr.dart
 *.g.dart
 *.freezed.dart
+*.config.dart
