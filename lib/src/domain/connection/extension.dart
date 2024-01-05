@@ -1,14 +1,16 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
+import 'dart:typed_data';
 
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:injectable/injectable.dart';
+import 'package:rxdart/subjects.dart';
 
 const dataChannelId = 1;
 const dataChannelLabel = 'wtc-dc1';
 
-enum ExtensionConnectionStatus { idle, begin, confirmed, active, error, done }
+enum ExtensionConnectionStatus { idle, began, confirmed, error, done }
 
 enum RTCSessionDescriptionType {
   offer('offer'),
@@ -27,14 +29,16 @@ class ExtensionConnection {
   late RTCDataChannel _sendDataChannel;
   late RTCDataChannel _extensionDataChannel;
 
-  ExtensionConnectionStatus status = ExtensionConnectionStatus.idle;
+  final _status = BehaviorSubject.seeded(ExtensionConnectionStatus.idle);
+  ExtensionConnectionStatus get status => _status.value;
+  Stream<ExtensionConnectionStatus> get status$ => _status.stream;
 
   Future<
       ({
         RTCSessionDescription offer,
         List<RTCIceCandidate> iceCandidates,
       })> beginConnection() async {
-    status = ExtensionConnectionStatus.begin;
+    _status.value = ExtensionConnectionStatus.began;
     final iceCandidatesCompleter = Completer<List<RTCIceCandidate>>();
     final iceCandidates = <RTCIceCandidate>[];
     _peerConnection = await createPeerConnection({'iceServers': []});
@@ -84,17 +88,25 @@ class ExtensionConnection {
         (RTCPeerConnectionState connectionState) {
       if (connectionState ==
           RTCPeerConnectionState.RTCPeerConnectionStateConnected) {
+        _status.value = ExtensionConnectionStatus.confirmed;
         send('connected!');
       }
     };
-    status = ExtensionConnectionStatus.confirmed;
   }
 
   Future<void> send(String text) async {
-    assert(status == ExtensionConnectionStatus.confirmed);
-    status = ExtensionConnectionStatus.active;
     await _sendDataChannel.send(RTCDataChannelMessage(text));
-    status = ExtensionConnectionStatus.done;
+  }
+
+  Future<void> sendBinary(Uint8List binary) async {
+    await _sendDataChannel.send(RTCDataChannelMessage.fromBinary(binary));
+  }
+
+  Future<void> close() async {
+    _status.value = ExtensionConnectionStatus.done;
+    _sendDataChannel.close();
+    _peerConnection?.close();
+    _status.value = ExtensionConnectionStatus.idle;
   }
 }
 

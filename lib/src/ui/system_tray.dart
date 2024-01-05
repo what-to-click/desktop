@@ -12,6 +12,7 @@ class SystemTrayManager {
   final _systemTray = SystemTray();
 
   final _trayToggle = BehaviorSubject.seeded(false);
+  bool get trayToggle => _trayToggle.value;
   Stream<bool> get trayToggle$ => _trayToggle.stream;
 
   Future<void> init() async {

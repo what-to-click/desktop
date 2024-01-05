@@ -12,11 +12,7 @@ class WhatToClickApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => MaterialApp.router(
-        routerConfig: appRouter.config(
-          deepLinkBuilder: (deeplink) {
-            return DeepLink.none;
-          },
-        ),
+        routerConfig: appRouter.config(),
         restorationScopeId: 'app',
         localizationsDelegates: const [
           AppLocalizations.delegate,

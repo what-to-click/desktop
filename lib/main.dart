@@ -9,7 +9,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   configureDependencies();
   setupDeeplinkListener();
-  sl<SystemTrayManager>().init();
+  await sl<SystemTrayManager>().init();
   runApp(WhatToClickApp());
 }
 
@@ -17,7 +17,7 @@ void setupDeeplinkListener() {
   final extensionConnection = sl<ExtensionConnection>();
   linkStream.listen((link) {
     if (link == null ||
-        extensionConnection.status != ExtensionConnectionStatus.begin) {
+        extensionConnection.status != ExtensionConnectionStatus.began) {
       return;
     }
 
