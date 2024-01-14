@@ -89,7 +89,6 @@ class ExtensionConnection {
       if (connectionState ==
           RTCPeerConnectionState.RTCPeerConnectionStateConnected) {
         _status.value = ExtensionConnectionStatus.confirmed;
-        send('connected!');
       }
     };
   }

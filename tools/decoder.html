@@ -5,6 +5,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Document</title>
+  <style>
+    img {
+      display: inline-block;
+      max-height: 200px;
+    }
+  </style>
 </head>
 
 <body>
@@ -12,15 +18,21 @@
   <button onclick="answer();">Confirm</button>
   <script type="text/javascript">
     const { offer, iceCandidates } = JSON.parse(decodeURIComponent(escape(atob(window.location.hash.substring(1)))));
+    const receivedMessages = [];
+    window.receivedMessages = receivedMessages;
 
     async function prepareAnswer(offer, iceCandidates) {
       let peerConnection = new RTCPeerConnection({ iceServers: [] });
       const localIceCandidates = [];
       peerConnection.ondatachannel = (event) => {
         event.channel.onmessage = (event) => {
-          const pTag = document.createElement('p');
-          pTag.textContent = event.data;
-          document.body.appendChild(pTag);
+          document.body.style.cursor = 'wait';
+          const data = JSON.parse(event.data);
+          receivedMessages.push(data);
+          if (data.type === 'end') {
+            loadSession();
+            document.body.style.cursor = 'pointer';
+          }
         };
       };
       peerConnection.onicecandidate = (event) => {
@@ -48,8 +60,30 @@
 
     function contactDesktop(serializedAnswer) {
       const desktopDeeplink = `wtc://what-to-click.com/answer#${encodeURIComponent(btoa(serializedAnswer))}`;
-      console.debug('deeplink:', { desktopDeeplink });
-      window.open(desktopDeeplink, '_blank');
+      const win = window.open(desktopDeeplink, '_blank');
+      if (win) {
+        win.close();
+      }
+    }
+
+    function loadSession(messages = receivedMessages.filter(({ type }) => type === 'data')) {
+      const clicks = {};
+      for (const message of messages) {
+        if (!clicks[message._id]) {
+          clicks[message._id] = { screenshot: 'data:image/png;base64,' };
+        }
+
+        clicks[message._id] = {
+          ...message,
+          screenshot: clicks[message._id].screenshot + message.screenshot,
+        }
+      }
+
+      for (const message of Object.values(clicks)) {
+        const imageNode = document.createElement('img');
+        imageNode.src = message.screenshot;
+        document.body.appendChild(imageNode);
+      }
     }
 
     const wait = (ms = 1000) => new Promise((resolve, _) => setTimeout(resolve, ms));
