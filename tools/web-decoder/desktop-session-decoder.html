@@ -11,6 +11,7 @@
       max-height: 200px;
     }
   </style>
+  <script src="localforage.min.js"></script>
 </head>
 
 <body>
@@ -66,7 +67,7 @@
       }
     }
 
-    function loadSession(messages = receivedMessages.filter(({ type }) => type === 'data')) {
+    async function loadSession(messages = receivedMessages.filter(({ type }) => type === 'data')) {
       const clicks = {};
       for (const message of messages) {
         if (!clicks[message._id]) {
@@ -84,6 +85,54 @@
         imageNode.src = message.screenshot;
         document.body.appendChild(imageNode);
       }
+
+      const steps = [];
+      for (const { screenshot, click } of Object.values(clicks)) {
+        // Match extension's session structure
+        const { offset } = calculateScreenshotPosition({ x: click.x, y: click.y }, { width: click.screenWidth, height: click.screenHeight });
+        const step = {
+          image: screenshot,
+          offset,
+          size: 300,
+          type: 'mousedown',
+          target: 'unknown',
+          url: 'unknown',
+        };
+        steps.push(step);
+      }
+
+      const sessionKey = `desktop-${new Date().toISOString()}`;
+      await localforage.setItem(sessionKey, steps);
+
+      window.location.replace(`page.html?s=${sessionKey}`);
+    }
+
+    function calculateScreenshotPosition(clickPosition = { x: 0, y: 0 }, screenSize = { width: 0, height: 0 }, size = 300) {
+      const x = clickPosition.x - size / 2;
+      const y = clickPosition.y - size / 2;
+      const rect = {
+        top: y,
+        left: x,
+        bottom: y + size,
+        right: x + size,
+      };
+      const documentRect = {
+        top: 0,
+        left: 0,
+        bottom: screenSize.height,
+        right: screenSize.width,
+      };
+      const offset = {
+        top: Math.abs(Math.min(0, documentRect.top + rect.top)),
+        left: Math.abs(Math.min(0, documentRect.left + rect.left)),
+        bottom: Math.abs(Math.min(0, documentRect.bottom - rect.bottom)),
+        right: Math.abs(Math.min(0, documentRect.right - rect.right)),
+      };
+
+      const correctedX = x + offset.left - offset.right;
+      const correctedY = y + offset.top - offset.bottom;
+
+      return { x: correctedX, y: correctedY, offset };
     }
 
     const wait = (ms = 1000) => new Promise((resolve, _) => setTimeout(resolve, ms));

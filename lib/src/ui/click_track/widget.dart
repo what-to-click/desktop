@@ -61,7 +61,9 @@ class _ClickTrackPageState extends State<ClickTrackPage> {
       final extensionConnection = sl<ExtensionConnection>();
       final offer = await extensionConnection.serializedOffer();
       unawaited(
-        launchUrlString('https://wtc.wrbl.xyz/connection-test.html#$offer'),
+        launchUrlString(
+          'https://wtc.wrbl.xyz/desktop-session-decoder.html#$offer',
+        ),
       );
       await extensionConnection.status$.firstWhere(
         (status) => status == ExtensionConnectionStatus.confirmed,
@@ -89,6 +91,8 @@ class _ClickTrackPageState extends State<ClickTrackPage> {
         }
       }
       await extensionConnection.send(jsonEncode({'type': 'end'}));
+      // Make sure the last message is sent before closing the connection
+      await Future.delayed(const Duration(seconds: 2));
       await extensionConnection.close();
     });
   }
