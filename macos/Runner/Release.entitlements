@@ -6,5 +6,7 @@
 	<true/>
 	<key>com.apple.security.temporary-exception.mach-register.global-name</key>
 	<string>com.apple.screencapture.interactive</string>
+	<key>com.apple.security.network.server</key>
+	<true/>
 </dict>
 </plist>

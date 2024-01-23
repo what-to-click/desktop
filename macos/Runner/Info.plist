@@ -27,7 +27,7 @@
 			<string>$(BUNDLE_IDENTIFIER)</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>wtc</string>
+				<string>whattoclick</string>
 			</array>
 		</dict>
 	</array>

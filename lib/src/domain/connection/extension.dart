@@ -10,7 +10,14 @@ import 'package:rxdart/subjects.dart';
 const dataChannelId = 1;
 const dataChannelLabel = 'wtc-dc1';
 
-enum ExtensionConnectionStatus { idle, began, confirmed, error, done }
+enum ExtensionConnectionStatus {
+  idle,
+  began,
+  responded,
+  confirmed,
+  error,
+  done
+}
 
 enum RTCSessionDescriptionType {
   offer('offer'),
@@ -72,18 +79,8 @@ class ExtensionConnection {
 
   Future<void> confirmConnection(String serializedAnswer) async {
     assert(_peerConnection != null);
+    _status.value = ExtensionConnectionStatus.responded;
     final (answer, iceCandidates) = deserialize(serializedAnswer);
-    await _peerConnection!.setRemoteDescription(answer);
-    iceCandidates.forEach((candidate) {
-      // Firefox is trying to be compliant with the spec
-      // and sends an empty candidate to indicate trickle ICE end.
-      // MacOSes WebRTC implementation does not like that and crashes
-      // the app if it founds this candidate, so we need to filter it out
-      // manually. It does not affect the connection routine.
-      if (candidate.candidate?.isNotEmpty ?? false) {
-        _peerConnection!.addCandidate(candidate);
-      }
-    });
     _peerConnection!.onConnectionState =
         (RTCPeerConnectionState connectionState) {
       if (connectionState ==
@@ -91,6 +88,18 @@ class ExtensionConnection {
         _status.value = ExtensionConnectionStatus.confirmed;
       }
     };
+    await _peerConnection!.setRemoteDescription(answer);
+    await Future.delayed(const Duration(seconds: 1));
+    for (final iceCandidate in iceCandidates) {
+      // Firefox is trying to be compliant with the spec
+      // and sends an empty candidate to indicate trickle ICE end.
+      // MacOSes WebRTC implementation does not like that and crashes
+      // the app if it founds this candidate, so we need to filter it out
+      // manually. It does not affect the connection routine.
+      if (iceCandidate.candidate?.isNotEmpty ?? false) {
+        await _peerConnection!.addCandidate(iceCandidate);
+      }
+    }
   }
 
   Future<void> send(String text) async {

@@ -60,11 +60,12 @@
     }
 
     function contactDesktop(serializedAnswer) {
-      const desktopDeeplink = `wtc://what-to-click.com/answer#${encodeURIComponent(btoa(serializedAnswer))}`;
+      const desktopDeeplink = `whattoclick://what-to-click.com/answer#${encodeURIComponent(btoa(serializedAnswer))}`;
       const win = window.open(desktopDeeplink, '_blank');
-      if (win) {
-        win.close();
-      }
+
+      // if (win) {
+      //   win.close();
+      // }
     }
 
     async function loadSession(messages = receivedMessages.filter(({ type }) => type === 'data')) {

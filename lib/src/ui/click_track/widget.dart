@@ -8,6 +8,7 @@ import 'package:auto_route/auto_route.dart';
 import 'package:click_tracker/click_tracker.dart';
 import 'package:click_tracker/click_tracker_platform_interface.dart';
 import 'package:flutter/material.dart';
+import 'package:image/image.dart' as img;
 import 'package:objectid/objectid.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:screen_capturer/screen_capturer.dart';
@@ -16,7 +17,6 @@ import 'package:what_to_click/src/domain/connection/extension.dart';
 import 'package:what_to_click/src/injectable.dart';
 import 'package:what_to_click/src/ui/click_track/widget/recorded_click.dart';
 import 'package:what_to_click/src/ui/system_tray.dart';
-import 'package:image/image.dart' as img;
 
 @RoutePage()
 class ClickTrackPage extends StatefulWidget {
@@ -29,7 +29,8 @@ class ClickTrackPage extends StatefulWidget {
 class _ClickTrackPageState extends State<ClickTrackPage> {
   late final StreamSubscription<ClickPosition> _clicksSub;
   late final StreamSubscription<bool> _systemTrayToggleSub;
-  final ScreenCapturer capturer = ScreenCapturer.instance;
+  final capturer = ScreenCapturer.instance;
+  final extensionConnection = sl<ExtensionConnection>();
   final _systemTray = sl<SystemTrayManager>();
   List<(ClickPosition, File)> screenshots = [];
 
@@ -58,7 +59,6 @@ class _ClickTrackPageState extends State<ClickTrackPage> {
         return;
       }
 
-      final extensionConnection = sl<ExtensionConnection>();
       final offer = await extensionConnection.serializedOffer();
       unawaited(
         launchUrlString(
@@ -107,7 +107,12 @@ class _ClickTrackPageState extends State<ClickTrackPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Current session'),
+        title: StreamBuilder<ExtensionConnectionStatus>(
+          stream: extensionConnection.status$,
+          builder: (context, snapshot) {
+            return Text('Current session: ${snapshot.data}');
+          },
+        ),
       ),
       body: ListView.builder(
         itemCount: screenshots.length,
