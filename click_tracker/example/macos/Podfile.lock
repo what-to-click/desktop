@@ -1,0 +1,22 @@
+PODS:
+  - click_tracker (0.0.1):
+    - FlutterMacOS
+  - FlutterMacOS (1.0.0)
+
+DEPENDENCIES:
+  - click_tracker (from `Flutter/ephemeral/.symlinks/plugins/click_tracker/macos`)
+  - FlutterMacOS (from `Flutter/ephemeral`)
+
+EXTERNAL SOURCES:
+  click_tracker:
+    :path: Flutter/ephemeral/.symlinks/plugins/click_tracker/macos
+  FlutterMacOS:
+    :path: Flutter/ephemeral
+
+SPEC CHECKSUMS:
+  click_tracker: 1cbb4fe81e56f88118b02ab4171dbf103d73ba05
+  FlutterMacOS: 8f6f14fa908a6fb3fba0cd85dbd81ec4b251fb24
+
+PODFILE CHECKSUM: 236401fc2c932af29a9fcf0e97baeeb2d750d367
+
+COCOAPODS: 1.11.2

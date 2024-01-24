@@ -148,7 +148,7 @@ packages:
   click_tracker:
     dependency: "direct main"
     description:
-      path: "../click_tracker"
+      path: click_tracker
       relative: true
     source: path
     version: "0.0.1"

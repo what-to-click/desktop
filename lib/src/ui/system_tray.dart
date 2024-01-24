@@ -17,24 +17,38 @@ class SystemTrayManager {
 
   Future<void> init() async {
     await _systemTray.initSystemTray(iconPath: _idleIconPath);
+
+    trayToggle$.listen((isToggled) {
+      final task = isToggled ? showBusy : showIdle;
+      unawaited(task());
+    });
+
+    final AppWindow appWindow = AppWindow();
+    final Menu menu = Menu();
+    await menu.buildFrom([
+      MenuItemLabel(label: 'Exit', onClicked: (menuItem) => appWindow.close()),
+    ]);
+
+    await _systemTray.setContextMenu(menu);
+
     _systemTray.registerSystemTrayEventHandler((eventName) {
       switch (eventName) {
         case kSystemTrayEventClick:
           _trayToggle.value = !_trayToggle.value;
+        case kSystemTrayEventRightClick:
+          _systemTray.popUpContextMenu();
       }
-    });
-    trayToggle$.listen((isToggled) {
-      final task = isToggled ? showBusy : showIdle;
-      unawaited(task());
     });
   }
 
   Future<void> showIdle() async {
     await _systemTray.setImage(_idleIconPath);
+    await _systemTray.setTitle('');
   }
 
   Future<void> showBusy() async {
     await _systemTray.setImage(_busyIconPath);
+    await _systemTray.setTitle('Live');
   }
 
   @disposeMethod

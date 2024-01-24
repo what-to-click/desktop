@@ -4,11 +4,39 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
+  <title>What-to-click desktop session decoder</title>
   <style>
     img {
       display: inline-block;
       max-height: 200px;
+    }
+
+    .loading {
+      display: none;
+      overflow: hidden;
+      height: 1.3em;
+      margin-top: -0.3em;
+      line-height: 1.5em;
+      vertical-align: text-bottom;
+      font-family: monospace;
+    }
+
+    .loading::after {
+      display: inline-table;
+      white-space: pre;
+      text-align: left;
+    }
+
+    .loading::after {
+      content: "/\A–\A\\\A|";
+      text-align: center;
+      animation: spin4 1s steps(4) infinite;
+    }
+
+    @keyframes spin4 {
+      to {
+        transform: translateY(-6.0em);
+      }
     }
   </style>
   <script src="localforage.min.js"></script>
@@ -16,13 +44,15 @@
 
 <body>
 
-  <button onclick="answer();">Confirm</button>
+  <button onclick="answer();">Confirm <span id="loading-indicator" class="loading"></span></button>
   <script type="text/javascript">
     const { offer, iceCandidates } = JSON.parse(decodeURIComponent(escape(atob(window.location.hash.substring(1)))));
     const receivedMessages = [];
     window.receivedMessages = receivedMessages;
 
     async function prepareAnswer(offer, iceCandidates) {
+      document.getElementById('loading-indicator').style.display = 'inline-block';
+
       let peerConnection = new RTCPeerConnection({ iceServers: [] });
       const localIceCandidates = [];
       peerConnection.ondatachannel = (event) => {
@@ -69,6 +99,7 @@
     }
 
     async function loadSession(messages = receivedMessages.filter(({ type }) => type === 'data')) {
+      document.getElementById('loading-indicator').style.display = 'none';
       const clicks = {};
       for (const message of messages) {
         if (!clicks[message._id]) {

@@ -62,7 +62,7 @@ class _ClickTrackPageState extends State<ClickTrackPage> {
       final offer = await extensionConnection.serializedOffer();
       unawaited(
         launchUrlString(
-          'https://wtc.wrbl.xyz/desktop-session-decoder.html#$offer',
+          'https://what-to-click.com/desktop-session-decoder.html#$offer',
         ),
       );
       await extensionConnection.status$.firstWhere(
@@ -94,34 +94,39 @@ class _ClickTrackPageState extends State<ClickTrackPage> {
       // Make sure the last message is sent before closing the connection
       await Future.delayed(const Duration(seconds: 2));
       await extensionConnection.close();
+      setState(() {
+        screenshots = [];
+      });
     });
   }
 
   @override
   void dispose() {
     _clicksSub.cancel();
+    _systemTrayToggleSub.cancel();
     super.dispose();
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: StreamBuilder<ExtensionConnectionStatus>(
-          stream: extensionConnection.status$,
-          builder: (context, snapshot) {
-            return Text('Current session: ${snapshot.data}');
-          },
+  Widget build(BuildContext context) => Scaffold(
+        appBar: AppBar(
+          title: StreamBuilder<ExtensionConnectionStatus>(
+            stream: extensionConnection.status$,
+            builder: (context, snapshot) {
+              if (snapshot.data != ExtensionConnectionStatus.confirmed) {
+                return const Text('Current session');
+              }
+
+              return const CircularProgressIndicator.adaptive();
+            },
+          ),
         ),
-      ),
-      body: ListView.builder(
-        itemCount: screenshots.length,
-        itemBuilder: (context, index) {
-          return RecordedClick(click: screenshots[index]);
-        },
-      ),
-    );
-  }
+        body: ListView.builder(
+          itemCount: screenshots.length,
+          itemBuilder: (context, index) =>
+              RecordedClick(click: screenshots[index]),
+        ),
+      );
 }
 
 class FullScreenImage extends StatelessWidget {
@@ -138,14 +143,12 @@ class FullScreenImage extends StatelessWidget {
 }
 
 extension on ClickPosition {
-  Map<String, dynamic> toMap() {
-    return {
-      'x': x,
-      'y': y,
-      'screenWidth': screenWidth,
-      'screenHeight': screenHeight,
-    };
-  }
+  Map<String, dynamic> toMap() => {
+        'x': x,
+        'y': y,
+        'screenWidth': screenWidth,
+        'screenHeight': screenHeight,
+      };
 }
 
 extension on String {
