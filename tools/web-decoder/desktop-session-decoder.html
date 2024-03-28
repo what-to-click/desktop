@@ -4,54 +4,510 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/svg+xml" href="https://what-to-click.com/assets/logo.svg">
   <title>What-to-click desktop session decoder</title>
   <style>
-    img {
-      display: inline-block;
-      max-height: 200px;
+    :root {
+      --foreground: #1A1918;
+      --background: #FFFCFA;
+      --background-level-1: #EDEBE8;
+      --dropdown-overlay: #1a191858;
+      --content-width: 50vw;
+      --spacing: 1em;
+      --spacing-large: 1.4em;
+      --border-radius: .3em;
     }
 
-    .loading {
-      display: none;
-      overflow: hidden;
-      height: 1.3em;
-      margin-top: -0.3em;
-      line-height: 1.5em;
-      vertical-align: text-bottom;
-      font-family: monospace;
+    * {
+      font-family: 'Atkinson Hyperlegible', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
     }
 
-    .loading::after {
-      display: inline-table;
-      white-space: pre;
-      text-align: left;
-    }
-
-    .loading::after {
-      content: "/\A–\A\\\A|";
-      text-align: center;
-      animation: spin4 1s steps(4) infinite;
-    }
-
-    @keyframes spin4 {
-      to {
-        transform: translateY(-6.0em);
+    @media screen and (prefers-color-scheme: dark) {
+      :root {
+        --foreground: #FFFCFA;
+        --background: #1A1918;
+        --background-level-1: #383634;
       }
+
+      body {
+        background-color: var(--background);
+      }
+    }
+
+    @media screen and (prefers-color-scheme: light) {
+      :root {
+        --foreground: #1A1918;
+        --background: #FFFCFA;
+        --background-level-1: #EDEBE8;
+      }
+
+      body {
+        background-color: var(--background);
+      }
+    }
+
+    @media screen and (min-width: 1000px) {
+      :root {
+        --content-width: 65vw;
+      }
+
+      .step {
+        display: flex;
+      }
+
+      .step>p {
+        flex: 1;
+      }
+
+      .step {
+        box-sizing: border-box;
+        margin-top: var(--spacing);
+      }
+    }
+
+    @media print {
+      :root {
+        --content-width: 100vw;
+        --foreground: #000000;
+        --background: #ffffff;
+        --background-level-1: #ffffff;
+      }
+
+      .step {
+        display: flex;
+      }
+
+      .step>p {
+        flex: 1;
+      }
+
+      .step-image>picture {
+        width: 200px !important;
+      }
+
+      .steps>.step {
+        box-sizing: border-box;
+        margin-top: var(--spacing);
+        filter: none !important;
+        border-bottom: #000000 dashed;
+        border-radius: 0 !important;
+      }
+
+      .steps>.step:last-child {
+        border-bottom: none;
+      }
+    }
+
+    @media screen and (min-width: 700px) and (max-width: 999px) {
+      :root {
+        --content-width: 80vw;
+      }
+
+      .step {
+        display: flex;
+      }
+
+      .step-image>picture {
+        width: 250px !important;
+      }
+
+      .step>p {
+        flex: 1;
+      }
+
+      .step {
+        box-sizing: border-box;
+        margin-top: var(--spacing);
+      }
+    }
+
+    @media screen and (max-width: 699px) {
+      :root {
+        --content-width: 100%;
+      }
+
+      html {
+        scroll-snap-type: y proximity;
+        overflow-x: hidden;
+      }
+
+      .export,
+      .ocr-info {
+        scroll-snap-align: start;
+      }
+
+      header {
+        scroll-snap-align: start;
+        min-height: 30vh;
+        display: grid;
+        align-items: center;
+      }
+
+      .steps>.step {
+        scroll-snap-align: start;
+        padding-bottom: var(--spacing);
+      }
+    }
+
+    body {
+      color: var(--foreground);
+      min-width: 200px;
+      background-size: 400% 400%;
+      animation: gradient 30s ease infinite;
+      min-height: 100svh;
+    }
+
+    .ocr-info>.ocr-loading-indicator {
+      display: flex;
+      gap: var(--spacing);
+      align-items: center;
+    }
+
+    .export,
+    .ocr-info {
+      display: flex;
+      gap: var(--spacing);
+    }
+
+    .export,
+    .ocr-info,
+    header h1 {
+      width: var(--content-width);
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .export,
+    .ocr-info {
+      box-sizing: border-box;
+      margin-bottom: var(--spacing);
+      padding-top: var(--spacing);
+    }
+
+    .export-options {
+      list-style: none;
+      display: inline-block;
+    }
+
+    .export-options ul {
+      padding: 0;
+      margin: 0;
+      margin-top: calc(var(--spacing) / 2);
+    }
+
+    .bring-to-front {
+      z-index: 1000;
+      cursor: progress;
+    }
+
+    .wtc-button {
+      box-sizing: border-box;
+      margin-right: var(--spacing);
+      padding: var(--spacing) var(--spacing-large);
+      border-radius: var(--border-radius);
+      background-color: var(--background-level-1);
+      color: var(--foreground);
+      border: none;
+      cursor: pointer;
+      transition: .1s ease-out;
+    }
+
+    .special {
+      border-radius: var(--border-radius);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .special:hover {
+      filter:
+        drop-shadow(calc((var(--spacing) - 3px) / 3) calc((var(--spacing) - 3px) / 3) 0 #F0CE26) drop-shadow(calc((var(--spacing) - 2px) / 3) calc((var(--spacing) - 2px) / 3) 0 #F01F0F) drop-shadow(calc((var(--spacing) - 1px) / 3) calc((var(--spacing) - 1px) / 3) 0 #26F079) drop-shadow(calc(var(--spacing) / 3) calc(var(--spacing) / 3) 0 #0A02F0) !important;
+    }
+
+    .special:active {
+      filter:
+        drop-shadow(calc((var(--spacing) - 3px) / 5) calc((var(--spacing) - 3px) / 5) 0 #F0CE26) drop-shadow(calc((var(--spacing) - 2px) / 5) calc((var(--spacing) - 2px) / 5) 0 #F01F0F) drop-shadow(calc((var(--spacing) - 1px) / 5) calc((var(--spacing) - 1px) / 5) 0 #26F079) drop-shadow(calc(var(--spacing) / 5) calc(var(--spacing) / 5) 0 #0A02F0) !important;
+    }
+
+    .special:after {
+      content: "";
+      position: absolute;
+      height: 15%;
+      top: 0;
+      width: 100%;
+      left: 0;
+      background: linear-gradient(to right,
+          #F0CE26 0%, #F0CE26 25%,
+          #F01F0F 25%, #F01F0F 50%,
+          #26F079 50%, #26F079 75%,
+          #0A02F0 75%, #0A02F0 100%);
+    }
+
+
+    .wtc-button:hover {
+      filter: drop-shadow(calc(var(--spacing) / 3) calc(var(--spacing) / 3) 0 var(--foreground)) saturate(2);
+    }
+
+    .wtc-button:active {
+      filter: drop-shadow(calc(var(--spacing) / 5) calc(var(--spacing) / 5) 0 var(--foreground));
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .steps,
+    footer {
+      margin: 0 auto;
+      max-width: var(--content-width);
+    }
+
+    .steps>.step {
+      box-sizing: border-box;
+      padding: var(--spacing) var(--spacing-large);
+      margin-top: var(--spacing);
+      counter-increment: step;
+      background-color: var(--background-level-1);
+      border-radius: var(--border-radius);
+      filter: drop-shadow(calc(var(--spacing) / 4) calc(var(--spacing) / 4) 0 var(--foreground));
+    }
+
+    .steps .index {
+      font-size: 2rem;
+      width: 2rem;
+      height: 2rem;
+      display: block;
+      font-weight: bold;
+      position: sticky;
+      top: 0;
+    }
+
+    .steps .index::before {
+      font-size: 2.3rem;
+      font-weight: bold;
+      content: counter(step) ". ";
+    }
+
+    .step-image {
+      display: grid;
+    }
+
+    .step-image>picture {
+      width: 300px;
+      max-width: 100%;
+      margin: 0 auto;
+      aspect-ratio: 1;
+      display: grid;
+    }
+
+    .step-image>picture>.screenshot,
+    .step-image>picture>.scrub-overlay,
+    .step-image>picture>.loading-overlay {
+      width: 100%;
+      border-radius: calc(var(--border-radius) - .1em);
+      flex: 1;
+      grid-column: 1;
+      grid-row: 1;
+    }
+
+    .step-image>picture>.scrub-overlay {
+      position: relative;
+    }
+
+    .step-image>picture>.scrub-overlay>.scrub-element {
+      position: absolute;
+      box-sizing: border-box;
+      background-color: transparent;
+      border: none;
+      cursor: pointer;
+      transition: .1s;
+    }
+
+    .step-image>picture>.scrub-overlay>.scrub-element:hover,
+    .step-image>picture>.scrub-overlay>.scrub-element.scrubbed:hover {
+      background-color: var(--background);
+      border: 2px dotted var(--foreground);
+      opacity: .5;
+    }
+
+    .step-image>picture>.scrub-overlay>.scrub-element.scrubbed:hover {
+      opacity: .3;
+      border: 2px solid var(--foreground);
+    }
+
+    .step-image>picture>.scrub-overlay>.scrub-element.scrubbed {
+      background-color: var(--background);
+      opacity: 1;
+    }
+
+    .step-image>picture>.cursor {
+      grid-column: 1;
+      grid-row: 1;
+      margin: auto;
+      width: 50px;
+      box-sizing: border-box;
+      position: relative;
+    }
+
+    .step-description {
+      display: flex;
+      flex-direction: column;
+      margin-top: -.4em;
+      padding-top: 0;
+    }
+
+    .step-description>.text-content {
+      flex: 1;
+      display: flex;
+      gap: var(--spacing);
+    }
+
+    .text-content>.content,
+    .summary {
+      background-color: transparent;
+      border: none;
+      color: var(--foreground);
+      width: 100%;
+      box-sizing: border-box;
+      margin-right: var(--spacing);
+      margin-top: var(--spacing);
+      resize: none;
+      font-size: 1rem;
+      box-sizing: border-box;
+      word-wrap: anywhere;
+    }
+
+    .text-content>.content[readonly],
+    .summary[readonly] {
+      outline: none;
+    }
+
+    header>.summary {
+      width: var(--content-width);
+      display: block;
+      margin: 0 auto;
+    }
+
+    .text-button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      opacity: .4;
+      color: var(--foreground);
+      display: inline;
+      text-align: start;
+      padding-top: var(--spacing);
+    }
+
+    .text-button:hover {
+      text-decoration: underline dashed;
+      opacity: 1;
+    }
+
+    footer {
+      box-sizing: border-box;
+      margin-top: var(--spacing-large);
+      text-align: end;
+      display: flex;
+      gap: 1em;
+      justify-content: space-between;
+    }
+
+    .loading-inline:after {
+      content: '';
+      box-sizing: border-box;
+      display: inline-block;
+      width: 2rem;
+      height: 2rem;
+      border-radius: 2rem;
+      background-color: var(--background);
+      border: 5px solid var(--background);
+      border-top-color: var(--foreground);
+      animation: fullSpin 1.6s ease-in-out infinite;
+      box-shadow: 0px 4px 0px -6px var(--foreground);
+    }
+
+    .loading:after {
+      content: '';
+      position: absolute;
+      box-sizing: border-box;
+      margin-top: var(--spacing);
+      margin-left: var(--spacing);
+      width: 2rem;
+      height: 2rem;
+      border-radius: 2rem;
+      background-color: var(--background);
+      border: 5px solid var(--background);
+      border-top-color: var(--foreground);
+      animation: fullSpin 1.6s ease-in-out infinite;
+      box-shadow: 0px 0px 12px -6px var(--foreground);
+    }
+
+    @keyframes fullSpin {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    a {
+      color: var(--foreground);
+    }
+
+    a:visited {
+      opacity: .8;
+    }
+
+    .dropdown {
+      position: absolute;
+      inset: 0;
+      background-color: var(--dropdown-overlay);
+      backdrop-filter: brightness(60%) blur(1px);
+    }
+
+    .dropdown>div {
+      position: relative;
+    }
+  </style>
+  <style>
+    main {
+      min-height: 90svh;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .confirm-button {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing);
+      transition: .3s;
+    }
+
+    .ignore-pointer {
+      pointer-events: none;
     }
   </style>
   <script src="localforage.min.js"></script>
 </head>
 
 <body>
-
-  <button onclick="answer();">Confirm <span id="loading-indicator" class="loading"></span></button>
+  <main>
+    <button id="confirm-button" class="wtc-button confirm-button" onclick="answer();">Save the session
+      <span id="loading-indicator" class="loading-inline hidden"></span>
+    </button>
+  </main>
   <script type="text/javascript">
     const { offer, iceCandidates } = JSON.parse(decodeURIComponent(escape(atob(window.location.hash.substring(1)))));
     const receivedMessages = [];
     window.receivedMessages = receivedMessages;
 
     async function prepareAnswer(offer, iceCandidates) {
-      document.getElementById('loading-indicator').style.display = 'inline-block';
+      document.getElementById('loading-indicator').classList.remove('hidden');
+      document.getElementById('confirm-button').classList.add('ignore-pointer');
 
       let peerConnection = new RTCPeerConnection({ iceServers: [] });
       const localIceCandidates = [];
@@ -99,7 +555,7 @@
     }
 
     async function loadSession(messages = receivedMessages.filter(({ type }) => type === 'data')) {
-      document.getElementById('loading-indicator').style.display = 'none';
+      document.getElementById('loading-indicator').classList.add('hidden');
       const clicks = {};
       for (const message of messages) {
         if (!clicks[message._id]) {
