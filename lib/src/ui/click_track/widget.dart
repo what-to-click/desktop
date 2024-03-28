@@ -8,6 +8,7 @@ import 'package:auto_route/auto_route.dart';
 import 'package:click_tracker/click_tracker.dart';
 import 'package:click_tracker/click_tracker_platform_interface.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:image/image.dart' as img;
 import 'package:objectid/objectid.dart';
 import 'package:path_provider/path_provider.dart';
@@ -50,11 +51,21 @@ class _ClickTrackPageState extends State<ClickTrackPage> {
         imagePath: imagePath,
       );
 
+      if (capturedScreen == null) {
+        return;
+      }
+
       setState(() {
-        screenshots.add((event, File(capturedScreen!.imagePath!)));
+        screenshots.add((event, File(capturedScreen.imagePath!)));
       });
     });
     _systemTrayToggleSub = _systemTray.trayToggle$.listen((isBusy) async {
+      if (isBusy) {
+        _systemTray.window?.hide();
+      } else {
+        _systemTray.window?.show();
+      }
+
       if (isBusy || screenshots.isEmpty) {
         return;
       }
@@ -94,6 +105,7 @@ class _ClickTrackPageState extends State<ClickTrackPage> {
       // Make sure the last message is sent before closing the connection
       await Future.delayed(const Duration(seconds: 2));
       await extensionConnection.close();
+      await _deleteScreenshots();
       setState(() {
         screenshots = [];
       });
@@ -104,8 +116,13 @@ class _ClickTrackPageState extends State<ClickTrackPage> {
   void dispose() {
     _clicksSub.cancel();
     _systemTrayToggleSub.cancel();
+    unawaited(_deleteScreenshots());
     super.dispose();
   }
+
+  Future<void> _deleteScreenshots() => Future.wait(
+        screenshots.map((screenshot) => screenshot.$2.delete()),
+      );
 
   @override
   Widget build(BuildContext context) => Scaffold(
@@ -113,15 +130,50 @@ class _ClickTrackPageState extends State<ClickTrackPage> {
           title: StreamBuilder<ExtensionConnectionStatus>(
             stream: extensionConnection.status$,
             builder: (context, snapshot) {
+              if (screenshots.isEmpty) {
+                return RichText(
+                  text: TextSpan(
+                    children: [
+                      const TextSpan(
+                        text: 'Start recording by clicking the ',
+                      ),
+                      WidgetSpan(
+                        child: Container(
+                          decoration: const BoxDecoration(
+                            color: Colors.grey,
+                            shape: BoxShape.circle,
+                          ),
+                          padding: const EdgeInsets.all(4),
+                          child: SvgPicture.asset(
+                            'assets/images/record.svg',
+                            width: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.fontSize ??
+                                14,
+                          ),
+                        ),
+                      ),
+                      const TextSpan(
+                        text: ' button in the system tray.',
+                      ),
+                    ],
+                  ),
+                );
+              }
+
               if (snapshot.data != ExtensionConnectionStatus.confirmed) {
-                return const Text('Current session');
+                return Text('Current session (${screenshots.length})');
               }
 
               return const CircularProgressIndicator.adaptive();
             },
           ),
         ),
-        body: ListView.builder(
+        body: GridView.builder(
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+          ),
           itemCount: screenshots.length,
           itemBuilder: (context, index) =>
               RecordedClick(click: screenshots[index]),

@@ -15,6 +15,8 @@ class SystemTrayManager {
   bool get trayToggle => _trayToggle.value;
   Stream<bool> get trayToggle$ => _trayToggle.stream;
 
+  AppWindow? window;
+
   Future<void> init() async {
     await _systemTray.initSystemTray(iconPath: _idleIconPath);
 
@@ -23,10 +25,10 @@ class SystemTrayManager {
       unawaited(task());
     });
 
-    final AppWindow appWindow = AppWindow();
+    window = AppWindow();
     final Menu menu = Menu();
     await menu.buildFrom([
-      MenuItemLabel(label: 'Exit', onClicked: (menuItem) => appWindow.close()),
+      MenuItemLabel(label: 'Exit', onClicked: (menuItem) => window?.close()),
     ]);
 
     await _systemTray.setContextMenu(menu);
