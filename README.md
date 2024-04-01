@@ -1,30 +1,18 @@
-# what_to_click
+# <img src="https://what-to-click.com/assets/logo.svg" height=36 align="left">What-to-click Desktop
 
-A new Flutter project.
+Create desktop-wide step-by-step documentation.
+<img src="docs/assets/image/demo.png" align="right" width="40%" alt="UI demonstration" style="margin-top: 4rem;">
 
-## Getting Started
+### What to click to use What-to-click
 
-This project is a starting point for a Flutter application that follows the
-[simple app state management
-tutorial](https://flutter.dev/docs/development/data-and-backend/state-mgmt/simple).
+1. [Download and install](#installation-macos) What-to-click.
+2. Click the circle in system's status bar.
+3. Perform necessary actions to achieve the goal you want to document. Each click will be recorded.
+4. Click the red square in system's status bar to stop recording.
+5. A page with editable text will be opened, containing all of the steps you have performed with screenshots attached. Edit step descriptions to your liking and export or save the file.
 
-For help getting started with Flutter development, view the
-[online documentation](https://flutter.dev/docs), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+#### Installation (macOS)
 
-## Assets
-
-The `assets` directory houses images, fonts, and any other files you want to
-include with your application.
-
-The `assets/images` directory contains [resolution-aware
-images](https://flutter.dev/docs/development/ui/assets-and-images#resolution-aware).
-
-## Localization
-
-This project generates localized messages based on arb files found in
-the `lib/src/localization` directory.
-
-To support additional languages, please visit the tutorial on
-[Internationalizing Flutter
-apps](https://flutter.dev/docs/development/accessibility-and-localization/internationalization)
+1. Download the [latest release](https://github.com/what-to-click/desktop/releases/latest).
+2. Unzip the downloaded file and drag the What-to-click application to the "Applications" directory.
+3. Right-click on the application while holding shift, and click "Open".
