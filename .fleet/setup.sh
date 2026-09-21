@@ -4,6 +4,11 @@ set -euo pipefail
 
 echo "[fleet] setting up what-to-click/desktop"
 
+# setup/agent/verify run in separate ephemeral containers; only the workspace
+# persists. Keep the pub cache inside the workspace (git-ignored) so the
+# packages fetched here are still resolvable by verify/agent.
+export PUB_CACHE="$PWD/.pub-cache"
+
 flutter --version
 flutter pub get
 
