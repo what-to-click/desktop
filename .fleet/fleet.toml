@@ -25,7 +25,7 @@ requires = []
 arch     = "amd64"
 
 [coi]
-profile = ""
+profile = "fleet-flutter"
 network = "restricted"
 timeout = "60m"
 
